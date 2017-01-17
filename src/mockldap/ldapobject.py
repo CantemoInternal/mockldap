@@ -10,7 +10,7 @@ import hashlib
 import re
 
 import ldap
-from ldap.cidict import cidict
+from .dndict import DNDict
 import ldap.dn
 
 from .recording import SeedRequired, RecordableMethods, recorded
@@ -19,7 +19,7 @@ from .recording import SeedRequired, RecordableMethods, recorded
 class LDAPObject(RecordableMethods):
     """
     :param directory: The initial content of this LDAP connection.
-    :type directory: :class:`ldap.cidict.cidict`: ``{dn: {attr: [values]}}``
+    :type directory: :class:`mockldap.dndict.DNDict`: ``{dn: {attr: [values]}}``
 
     Our mock replacement for :class:`ldap.LDAPObject`. This exports selected
     LDAP operations and allows you to set return values in advance as well as
@@ -45,9 +45,9 @@ class LDAPObject(RecordableMethods):
         *string*: DN of the last successful bind. None if unbound.
     """
     def __init__(self, directory):
-        if not isinstance(directory, ldap.cidict.cidict):
+        if not isinstance(directory, DNDict):
             from . import map_keys
-            directory = cidict(map_keys(lambda s: s.lower(), directory))
+            directory = DNDict(map_keys(lambda s: s.lower(), directory))
 
         self.directory = deepcopy(directory)
         self.async_results = []
@@ -87,6 +87,15 @@ class LDAPObject(RecordableMethods):
         """
         """
         success = False
+
+        # Active Directory uses user@domain.com
+        if '@' in who:
+            username, domain = who.split('@', 1)
+            filt = '(sAMAccountName=%s)' % username
+            base = self._domain_to_dn(domain)
+            search_res = self._search_s(base, ldap.SCOPE_SUBTREE, filt, None, 0)
+            if search_res:
+                who = search_res[0][0]
 
         try:
             if(who == '' and cred == ''):
@@ -416,3 +425,6 @@ class LDAPObject(RecordableMethods):
             value = None
 
         return value
+
+    def _domain_to_dn(self, domain):
+        return ", ".join(["dc=%s" % dc for dc in domain.split(".")])

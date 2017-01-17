@@ -146,6 +146,11 @@ class TestLDAPObject(unittest.TestCase):
 
         self.assertEqual(results, [alice])
 
+    def test_search_s_get_specific_item_non_exact_dn(self):
+        results = self.ldapobj.search_s("cn=alice, ou=example,o=test", ldap.SCOPE_BASE)
+
+        self.assertEqual(results, [alice])
+
     def test_search_s_get_specific_attr(self):
         results = self.ldapobj.search_s("cn=alice,ou=example,o=test", ldap.SCOPE_BASE,
                                         attrlist=["userPassword"])
