@@ -138,6 +138,18 @@ class LDAPObject(RecordableMethods):
         return self._search_s(base, scope, filterstr, attrlist, attrsonly)
 
     @recorded
+    def search_ext_s(self, base, scope, filterstr='(objectClass=*)', attrlist=None, attrsonly=0,
+                     serverctrls=None, clientctrls=None, timeout=-1, sizelimit=0):
+        """
+        Supports many, but not all, filter strings.
+
+        Tests of the form ``'(foo=bar)'`` and ``'(foo=\*)'`` are supported, as
+        are the &, \|, and !  operators. attrlist and attrsonly are also
+        supported. Beyond that, this method must be seeded.
+        """
+        return self._search_s(base, scope, filterstr, attrlist, attrsonly)
+
+    @recorded
     def start_tls_s(self):
         """
         """
